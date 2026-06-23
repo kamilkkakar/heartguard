@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeartGuard - Cholesterol & Stroke Risk Tracker</title>
+    <!-- Tailwind CSS for rich, modern styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for medical & utility icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar for desktop views */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        /* Custom smooth transition */
+        .tab-transition {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Pulse animations for status indicators */
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.85; }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-24 md:pb-6">
+
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl border-x border-slate-100 flex flex-col justify-between relative">
+        
+        <!-- Header -->
+        <header class="sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-100 z-40 px-5 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner">
+                    <i class="fa-solid fa-heart-pulse text-xl animate-pulse-soft"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">HeartGuard</h1>
+                    <span class="text-[10px] uppercase tracking-wider font-semibold text-rose-500">Stroke Risk Interceptor</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openUrgentAlert()" class="p-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors" title="View Urgent Alert Info">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </button>
+                <div class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1.5 border border-emerald-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Saved Locally
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow p-5 space-y-6 overflow-y-auto">
+
+            <!-- Tab 1: Dashboard (Lab Trend Comparison & Risk analysis) -->
+            <div id="tab-dashboard" class="tab-content space-y-5">
+                
+                <!-- Risk Trajectory Card (Updated Dynamically) -->
+                <div id="risk-trajectory-card" class="bg-gradient-to-r from-rose-500 to-rose-600 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300">
+                    <div class="absolute -right-12 -bottom-12 opacity-10 text-[180px] font-bold pointer-events-none">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="text-xs text-rose-100/80 font-medium uppercase tracking-wider">Critical Risk Trajectory</span>
+                            <h2 id="risk-trajectory-title" class="text-2xl font-black mt-0.5">Risk Level: High</h2>
+                        </div>
+                        <span id="risk-trajectory-badge" class="px-3 py-1 bg-white/20 backdrop-blur-sm text-[11px] font-extrabold tracking-widest rounded-full uppercase border border-white/20">Worsened Trend</span>
+                    </div>
+                    <p id="risk-trajectory-text" class="text-xs text-rose-50/90 leading-relaxed font-normal">
+                        Your cholesterol went up in <strong class="font-bold">new_test.jpeg</strong> compared to <strong class="font-bold">old_test.jpeg</strong>. Your LDL climbed to <span class="underline underline-offset-2">199 mg/dl</span> (Very High) and HDL dropped to <span class="underline underline-offset-2">39 mg/dl</span> (Low), driving up stroke and arterial occlusion risks. Let's fix this!
+                    </p>
+                    <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10 text-center">
+                        <div class="bg-white/10 rounded-2xl p-2.5 backdrop-blur-sm">
+                            <span id="old-test-label" class="text-[10px] text-rose-100 uppercase tracking-wider block">old_test.jpeg LDL</span>
+                            <span id="old-test-ldl-val" class="text-lg font-extrabold">177 <span class="text-xs font-normal">mg/dl</span></span>
+                        </div>
+                        <div class="bg-white/20 rounded-2xl p-2.5 border border-white/20">
+                            <span id="new-test-label" class="text-[10px] text-rose-100 uppercase tracking-wider block">new_test.jpeg LDL</span>
+                            <span id="new-test-ldl-val" class="text-lg font-extrabold flex items-center justify-center gap-1">
+                                199 <i id="ldl-trend-icon" class="fa-solid fa-arrow-trend-up text-sm animate-bounce text-white"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lab Report Uploader Widget -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-file-medical text-indigo-500"></i> Track New Lab Result
+                        </h3>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Progression Matrix</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Got a new lipid panel? Upload the report image and log the metrics to dynamically compute your health progression.
+                    </p>
+                    <button onclick="openUploadTestModal()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm">
+                        <i class="fa-solid fa-cloud-arrow-up text-indigo-300"></i> Upload & Compare New Test
+                    </button>
+                </div>
+
+                <!-- Interactive Lab Comparison Card -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-vial text-indigo-500"></i> Comparative Blood Panel
+                        </h3>
+                        <span id="comparison-card-sub" class="text-xs font-semibold text-slate-400">old_test.jpeg vs. new_test.jpeg</span>
+                    </div>
+
+                    <!-- Interactive Slider/Metrics visual representation (Updated Dynamically) -->
+                    <div class="space-y-4 pt-1">
+                        <!-- Serum Cholesterol -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-slate-600">Total Serum Cholesterol</span>
+                                <span id="panel-total-val" class="text-rose-600 font-bold">276 mg/dl <span class="text-slate-400 font-normal">(was 254)</span></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                                <div class="bg-emerald-400 h-full" style="width: 45%" title="Desirable Range"></div>
+                                <div class="bg-amber-400 h-full" style="width: 15%" title="Borderline"></div>
+                                <div class="bg-rose-500 h-full" style="width: 40%" title="High Area"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-400">
+                                <span>Ideal: &lt; 200</span>
+                                <span>Borderline: 200-239</span>
+                                <span id="total-status-text" class="font-bold text-rose-500">Your Level: 276 (High)</span>
+                            </div>
+                        </div>
+
+                        <!-- LDL - The Bad One -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-slate-600">LDL ("Bad" Cholesterol)</span>
+                                <span id="panel-ldl-val" class="text-rose-600 font-bold">199 mg/dl <span class="text-slate-400 font-normal">(was 177)</span></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                                <div class="bg-emerald-400 h-full" style="width: 30%"></div>
+                                <div class="bg-amber-400 h-full" style="width: 25%"></div>
+                                <div class="bg-rose-500 h-full" style="width: 45%"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-400">
+                                <span>Ideal: &lt; 100</span>
+                                <span>High: 160-189</span>
+                                <span id="ldl-status-text" class="font-bold text-rose-500 text-right">Your Level: 199 (Very High)</span>
+                            </div>
+                        </div>
+
+                        <!-- HDL - The Good One -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-slate-600">HDL ("Good" Cholesterol)</span>
+                                <span id="panel-hdl-val" class="text-rose-600 font-bold">39 mg/dl <span class="text-slate-400 font-normal">(was 49)</span></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                                <div class="bg-rose-500 h-full" style="width: 30%"></div>
+                                <div class="bg-amber-400 h-full" style="width: 15%"></div>
+                                <div class="bg-emerald-400 h-full" style="width: 55%"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-400">
+                                <span id="hdl-status-text" class="font-bold text-rose-500">Your Level: 39 (Low Risk)</span>
+                                <span>Neutral: 40-59</span>
+                                <span>Ideal: &gt; 60</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Target Indicator Widget -->
+                    <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100 mt-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Cholesterol Goal Matrix</span>
+                                <p class="text-xs font-bold text-slate-700">Bring LDL &lt; 100 & raise HDL &gt; 50</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adherence Meter -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-emerald-500"></i> Daily Adherence Tracker
+                    </h3>
+                    <p class="text-xs text-slate-500">Check off your heart tasks or log custom food to watch your defensive score climb.</p>
+                    
+                    <div class="relative pt-2">
+                        <div class="flex justify-between items-center mb-1 text-xs">
+                            <span class="text-slate-600 font-semibold">Today's Progress</span>
+                            <span id="adherence-percent" class="text-emerald-600 font-bold">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div id="adherence-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-2" id="dashboard-checklist">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Custom Extra Healthy and Danger list containers -->
+                    <div id="adherence-extra-container" class="space-y-2 pt-2.5 border-t border-slate-100 hidden">
+                        <!-- Extra healthy logged foods -->
+                        <div id="custom-goods-list" class="space-y-1.5"></div>
+                    </div>
+
+                    <div id="adherence-warnings-container" class="space-y-2 pt-2.5 border-t border-slate-100 hidden">
+                        <span class="text-[10px] font-bold text-rose-500 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation animate-bounce"></i> Plaque & Stroke Warnings Today
+                        </span>
+                        <!-- Extra unhealthy items with clinical warnings -->
+                        <div id="custom-slipups-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- Custom Intake Auditor Input Box (Text & Image Combined) -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 space-y-2 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                            <i class="fa-solid fa-utensils text-emerald-500 mr-1"></i> Log Custom Intake / Verify Food
+                        </label>
+                        <p class="text-[10px] text-slate-400">Write what you ate or snap/upload a food photo to audit safety against 199 mg/dl LDL.</p>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" id="adherence-custom-input" placeholder="e.g. Scrambled eggs, Chia seeds" class="flex-1 bg-white border border-slate-200 rounded-xl py-1.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                            
+                            <!-- Custom Camera/Upload button inside dashboard -->
+                            <input type="file" id="auditor-file-input" accept="image/*" class="hidden" onchange="handleAuditorFileSelect(event)">
+                            <button onclick="triggerAuditorFileSelect()" class="p-2 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center shrink-0 w-9 h-9 border border-slate-200" title="Snap or Upload Food Picture">
+                                <i class="fa-solid fa-camera text-base"></i>
+                            </button>
+
+                            <button onclick="analyzeAndLogAdherenceFood()" id="btn-log-adherence" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shrink-0">
+                                <i class="fa-solid fa-magnifying-glass"></i> Log
+                            </button>
+                        </div>
+
+                        <!-- Live image preview element -->
+                        <div id="auditor-image-preview-container" class="hidden relative inline-block mt-1">
+                            <img id="auditor-image-preview-img" src="" alt="Food Preview" class="h-14 w-14 object-cover rounded-xl border border-emerald-200 shadow-sm">
+                            <button onclick="clearAuditorPreviewImage(event)" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 shadow">
+                                <i class="fa-solid fa-times text-[10px]"></i>
+                            </button>
+                        </div>
+
+                        <div id="adherence-auditor-status" class="hidden p-2.5 rounded-xl text-[10px] leading-relaxed"></div>
+                    </div>
+                    <div class="flex justify-end pt-1">
+                        <button onclick="triggerResetDailyTracker()" class="text-[9px] text-slate-400 hover:text-rose-500 font-bold uppercase transition-all">
+                            <i class="fa-solid fa-rotate-left mr-0.5"></i> Reset Daily Tracker
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive Food Log Summary -->
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-3xl p-5 text-white shadow-md">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-sm uppercase tracking-wide">The "Portfolio" Advantage</h4>
+                        <i class="fa-solid fa-leaf text-indigo-200"></i>
+                    </div>
+                    <p class="text-xs leading-relaxed opacity-95">
+                        Scientific research demonstrates that dedicating to a plant-based portfolio of cholesterol-lowering foods can reduce harmful LDL levels by up to <strong class="font-bold text-amber-200">35%</strong>—equivalent to a starting-dose statin therapy.
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- Tab 2: Diet Plan (Eat vs Avoid Complete Tables with AI Visualizers & AI Vision Classifier) -->
+            <div id="tab-diet" class="tab-content hidden space-y-5">
+                
+                <!-- AI Food Classifier Tool with Vision Camera -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2 text-xs uppercase tracking-wide">
+                        <i class="fa-solid fa-magnifying-glass-chart text-indigo-500"></i> AI Food Vision Classifier
+                    </h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Unsure of a food's lipid safety? Type the food item OR snap a picture. Our AI will identify the ingredients, evaluate risk, and sort it automatically.
+                    </p>
+                    
+                    <div class="flex gap-2">
+                        <input type="text" id="food-analyzer-input" placeholder="e.g., Avocado, Cheddar Cheese, Tofu" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        
+                        <!-- Snap/Upload Input for Diet Classifier -->
+                        <input type="file" id="classifier-file-input" accept="image/*" class="hidden" onchange="handleClassifierFileSelect(event)">
+                        <button onclick="triggerClassifierFileSelect()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center shrink-0 w-10 h-10 border border-slate-200" title="Snap or Upload Picture of Food">
+                            <i class="fa-solid fa-camera text-base"></i>
+                        </button>
+
+                        <button onclick="analyzeAndCategorizeFood()" id="btn-analyze-food" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 h-10">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> Analyze
+                        </button>
+                    </div>
+
+                    <!-- Live image preview element for Classifier -->
+                    <div id="classifier-image-preview-container" class="hidden relative inline-block mt-1">
+                        <img id="classifier-image-preview-img" src="" alt="Classifier Preview" class="h-16 w-16 object-cover rounded-xl border border-indigo-200 shadow-sm">
+                        <button onclick="clearClassifierPreviewImage(event)" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 shadow">
+                            <i class="fa-solid fa-times text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Inline status/result -->
+                    <div id="analyzer-result-card" class="hidden p-3.5 rounded-2xl text-xs space-y-2">
+                        <!-- Populated dynamic output -->
+                    </div>
+                </div>
+
+                <!-- Tab Switching inside Diet -->
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
+                    <button onclick="switchDietSubTab('eat')" id="btn-diet-eat" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-slate-900 shadow-sm">
+                        <i class="fa-solid fa-circle-check text-emerald-500 mr-1.5"></i> Foods to Eat
+                    </button>
+                    <button onclick="switchDietSubTab('avoid')" id="btn-diet-avoid" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800">
+                        <i class="fa-solid fa-circle-xmark text-rose-500 mr-1.5"></i> Avoid Completely
+                    </button>
+                </div>
+
+                <!-- Subtab 1: FOODS TO EAT -->
+                <div id="diet-subtab-eat" class="space-y-4">
+                    <div class="bg-emerald-50 text-emerald-800 p-4 rounded-2xl border border-emerald-100 text-xs leading-relaxed flex items-start gap-3">
+                        <i class="fa-solid fa-shield-halved text-emerald-500 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold">Cholesterol Busters:</strong> These functional ingredients block cholesterol absorption in your stomach, sweep it away via soluble fiber, and repair vascular elasticity to lower blood pressure.
+                        </div>
+                    </div>
+
+                    <!-- Interactive Food Cards Grid -->
+                    <div class="space-y-3.5" id="eat-foods-container">
+                        <!-- Foods will be rendered here dynamically via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Subtab 2: FOODS TO AVOID -->
+                <div id="diet-subtab-avoid" class="space-y-4 hidden">
+                    <div class="bg-rose-50 text-rose-800 p-4 rounded-2xl border border-rose-100 text-xs leading-relaxed flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold">Avoid Completely:</strong> These items contain high saturated and trans fats that tell your liver to mass-produce bad LDL cholesterol, accelerating vascular blockage and raising risk.
+                        </div>
+                    </div>
+
+                    <!-- Interactive Avoid Foods List -->
+                    <div class="space-y-3.5" id="avoid-foods-container">
+                        <!-- Avoid foods will be rendered here dynamically via JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Tab 3: Daily Diary (Tracking metrics) -->
+            <div id="tab-diary" class="tab-content hidden space-y-5">
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-feather-pointed text-blue-500"></i> Daily Vitals Logger
+                    </h3>
+                    <p class="text-xs text-slate-500">Consistently tracking daily vitals keeps your vascular pressure levels in focus. Record your progress daily.</p>
+
+                    <form id="vitals-form" class="space-y-4" onsubmit="saveVitals(event)">
+                        <!-- Weight -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-600">Weight (kg / lbs)</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" id="vital-weight" placeholder="e.g. 75" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">Units</span>
+                            </div>
+                        </div>
+
+                        <!-- Active Minutes -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-600">Cardio / Active Time (Minutes)</label>
+                            <div class="relative">
+                                <input type="number" id="vital-cardio" placeholder="e.g. 30" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">Mins</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 block"><i class="fa-solid fa-circle-info"></i> Cardio exercise boosts good HDL!</span>
+                        </div>
+
+                        <!-- Water Intake -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-600">Water Intake (Glasses)</label>
+                            <div class="relative">
+                                <input type="number" id="vital-water" placeholder="e.g. 8" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">Glasses</span>
+                            </div>
+                        </div>
+
+                        <!-- Mood / Energy -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-600">Energy Level Today</label>
+                            <select id="vital-energy" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                <option value="Excellent">Excellent - Feeling energetic</option>
+                                <option value="Good" selected>Good - Steady & active</option>
+                                <option value="Moderate">Moderate - Standard energy</option>
+                                <option value="Low">Low - Tired / Fatigue</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i> Log Day & Check Stats
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Past logs / History Panel -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-xs uppercase tracking-wide text-slate-700">Adherence History Logs</h4>
+                        <button onclick="triggerClearAllLogs()" class="text-[10px] text-slate-400 hover:text-rose-500 font-bold uppercase">Clear Data</button>
+                    </div>
+                    <div id="vitals-history-list" class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Tab 4: AI Chef (Dynamic Cholesterol-Friendly Recipe Creator) -->
+            <div id="tab-chef" class="tab-content hidden space-y-5">
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800">Cardio Kitchen AI</h3>
+                            <span class="text-[10px] text-slate-400 block">Personalized, low-cholesterol meal builder</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Pick healthy ingredients from your portfolio diet, and our Gemini AI assistant will craft an optimal, heart-safe culinary recipe to reduce blood cholesterol.
+                    </p>
+
+                    <div class="space-y-3 pt-2">
+                        <label class="block text-xs font-bold text-slate-600">Select Ingredients to Include:</label>
+                        <div class="grid grid-cols-2 gap-2" id="chef-ingredients-selector">
+                            <!-- Populated with healthy food tags via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Custom Prompt input for adjustments -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-slate-600">Additional Preferences (Optional)</label>
+                        <input type="text" id="recipe-preference" placeholder="e.g., Quick 15 min, Spicy, Gluten-Free" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                    </div>
+
+                    <!-- API Status Warning / Custom API Settings -->
+                    <div class="bg-slate-50 rounded-xl p-3 text-[10px] text-slate-500 border border-slate-100">
+                        <div class="flex justify-between items-center mb-1">
+                            <span><i class="fa-solid fa-key"></i> Google Gemini AI API:</span>
+                            <span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle text-[8px]"></i> Secured (Server-Side Key)</span>
+                        </div>
+                        Your requests are proxied securely through the <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-600">gemini-3-flash-preview</code> model.
+                    </div>
+
+                    <button onclick="generateRecipe()" id="btn-generate-recipe" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Craft Cholesterol-Lowering Recipe
+                    </button>
+                </div>
+
+                <!-- Recipe Output Panel -->
+                <div id="recipe-output-card" class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 hidden space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-bowl-food text-emerald-500"></i> AI Recipe Drafted
+                        </h4>
+                        <button onclick="copyRecipeToClipboard()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> Copy Recipe
+                        </button>
+                    </div>
+
+                    <!-- Recipe Visual Showcase Section -->
+                    <div id="recipe-image-loading" class="hidden text-center py-6 text-slate-400 text-xs">
+                        <i class="fa-solid fa-spinner animate-spin text-xl mb-1.5 block text-indigo-500"></i>
+                        Visualizing delicious heart-safe cooked presentation...
+                    </div>
+                    <div id="recipe-image-wrapper" class="hidden rounded-2xl overflow-hidden border border-slate-150 max-h-56 relative group cursor-pointer" onclick="zoomRecipeImage()">
+                        <img id="recipe-dish-image" src="" alt="AI Plated Dish" class="w-full h-48 object-cover">
+                        <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i> View Full Cooked Plating
+                        </div>
+                    </div>
+
+                    <!-- Recipe Content container -->
+                    <div id="recipe-text-content" class="text-xs text-slate-600 leading-relaxed space-y-3 prose">
+                        <!-- Populated by Gemini -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Disclaimer (always visible) -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-[10px] text-amber-800 leading-relaxed flex items-start gap-2 mt-2">
+                <i class="fa-solid fa-circle-info text-amber-500 mt-0.5 shrink-0"></i>
+                <span><strong>Not medical advice.</strong> HeartGuard is an educational prototype, not a medical device. AI output can be inaccurate or wrong. Always consult a qualified clinician before making decisions about your health, diet, or medication.</span>
+            </div>
+
+        </main>
+
+        <!-- Dynamic Modal: UPLOAD NEW TEST RESULTS -->
+        <div id="upload-test-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 hidden">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl relative border-t-8 border-indigo-500 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base">
+                            <i class="fa-solid fa-file-medical"></i>
+                        </div>
+                        <h3 class="font-extrabold text-slate-900 text-base">Log New Lab Panel</h3>
+                    </div>
+                    <button onclick="closeUploadTestModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Live Extraction Status Indicator -->
+                <div id="extraction-status" class="hidden p-3 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-2 text-xs text-indigo-700">
+                    <i class="fa-solid fa-circle-notch animate-spin text-indigo-500 text-sm"></i>
+                    <span id="extraction-status-text">Analyzing image content...</span>
+                </div>
+
+                <!-- Drag & Drop Image Upload Container -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600">Upload Report Document / Image</label>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center hover:border-indigo-400 transition-all cursor-pointer relative" onclick="triggerFileSelect()">
+                        <input type="file" id="report-file-input" accept="image/*" class="hidden" onchange="handleReportFileSelect(event)">
+                        <div class="space-y-1.5 text-slate-500">
+                            <i id="upload-icon-status" class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400"></i>
+                            <p id="upload-text-status" class="text-[11px] font-semibold leading-normal">Tap to browse or take a photo of your new test results.</p>
+                        </div>
+                        <!-- Tiny preview thumbnail -->
+                        <div id="uploaded-preview-container" class="hidden absolute inset-0 bg-white/95 rounded-2xl p-1 flex items-center justify-center">
+                            <img id="uploaded-preview-img" src="" alt="Thumbnail" class="max-h-full max-w-full rounded-xl object-contain">
+                            <button onclick="clearUploadedFile(event)" class="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 shadow-md">
+                                <i class="fa-solid fa-times text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lipid Profile Input Parameters -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase">LDL (Bad) <span class="text-red-500">*</span></label>
+                        <input type="number" id="input-ldl" placeholder="mg/dl" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase">HDL (Good) <span class="text-red-500">*</span></label>
+                        <input type="number" id="input-hdl" placeholder="mg/dl" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                    </div>
+                    <div class="space-y-1 col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase">Total Serum Cholesterol <span class="text-red-500">*</span></label>
+                        <input type="number" id="input-total" placeholder="mg/dl" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase">Triglycerides</label>
+                        <input type="number" id="input-trig" placeholder="mg/dl" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-600 uppercase">Test Name / Date</label>
+                        <input type="text" id="input-test-name" placeholder="e.g., new_test.jpeg" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button onclick="closeUploadTestModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors">Cancel</button>
+                    <button id="btn-submit-lab" onclick="submitNewLabReport()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-circle-check"></i> Save & Dynamic Compare
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Confirmation Modal (Replaces browser confirm) -->
+        <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 hidden">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl relative">
+                <div class="flex items-center gap-3 text-amber-500">
+                    <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </div>
+                    <h3 id="confirm-title" class="font-extrabold text-slate-900 text-sm">Are you sure?</h3>
+                </div>
+                <p id="confirm-text" class="text-xs text-slate-600 leading-relaxed">This action cannot be undone.</p>
+                <div class="flex gap-2 pt-2">
+                    <button id="confirm-cancel-btn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors">Cancel</button>
+                    <button id="confirm-ok-btn" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors">Proceed</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Dialog: Urgent Stroke Warning (Triggered by Alert Icon) -->
+        <div id="urgent-alert" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 hidden">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl relative border-t-8 border-rose-500 max-h-[85vh] overflow-y-auto">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-lg">Critical Alert Summary</h3>
+                        <span class="text-[10px] text-rose-500 font-bold uppercase tracking-wide">Test Comparison Analysis</span>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-600 space-y-2.5 leading-relaxed">
+                    <p>
+                        A review of your current lab parameters reveals critical trends:
+                    </p>
+                    <ul class="space-y-1.5 list-disc pl-4 text-slate-700">
+                        <li><strong>Worsened Total Cholesterol:</strong> Spiked from <strong id="alert-old-total" class="text-rose-500">254 mg/dl</strong> in <strong id="alert-old-label" class="text-slate-900">old_test.jpeg</strong> to <strong id="alert-new-total" class="text-rose-500">276 mg/dl</strong> in <strong id="alert-new-label" class="text-slate-900">new_test.jpeg</strong>.</li>
+                        <li><strong>High Stroke Risk:</strong> Bad LDL jumped from <strong id="alert-old-ldl" class="text-rose-500">177 mg/dl</strong> to a very high <strong id="alert-new-ldl" class="text-rose-600">199 mg/dl</strong>, and good HDL declined from <strong id="alert-old-hdl" class="text-slate-900">49 mg/dl</strong> to a low <strong id="alert-new-hdl" class="text-rose-600">39 mg/dl</strong>.</li>
+                    </ul>
+                    <p class="text-slate-500 italic">
+                        Action is immediately required. These figures significantly increase your risk of atherosclerosis and ischemic strokes. This diet companion is designed to aggressively revert these trends.
+                    </p>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-relaxed border-t border-slate-100 pt-2.5"><i class="fa-solid fa-circle-info mr-1"></i> Educational prototype — not medical advice or a diagnosis. Consult a qualified clinician.</p>
+                <button onclick="closeUrgentAlert()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-800 transition-colors">
+                    Understood. Let's Begin
+                </button>
+            </div>
+        </div>
+
+        <!-- Fullscreen Image Preview Dialog -->
+        <div id="image-viewer-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-5 hidden">
+            <div class="absolute top-5 right-5 flex gap-2">
+                <button onclick="closeImageViewer()" class="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all text-lg">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="w-full max-w-sm flex flex-col items-center space-y-4">
+                <img id="viewer-img" src="" alt="Full visual" class="max-w-full max-h-[70vh] rounded-2xl object-cover shadow-2xl border border-white/10">
+                <p id="viewer-caption" class="text-center text-xs text-slate-300 px-4"></p>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Bottom Bar -->
+        <nav class="sticky bottom-0 bg-white border-t border-slate-100 px-4 py-2 flex justify-between items-center z-40">
+            <!-- Nav Item 1 -->
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center py-1 flex-1 text-indigo-600 font-extrabold">
+                <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+                <span class="text-[9px] tracking-tight">Dashboard</span>
+            </button>
+
+            <!-- Nav Item 2 -->
+            <button onclick="switchTab('diet')" id="nav-diet" class="flex flex-col items-center py-1 flex-1 text-slate-400 hover:text-slate-700">
+                <i class="fa-solid fa-basket-shopping text-lg mb-0.5"></i>
+                <span class="text-[9px] tracking-tight">Diet Plan</span>
+            </button>
+
+            <!-- Nav Item 3 -->
+            <button onclick="switchTab('diary')" id="nav-diary" class="flex flex-col items-center py-1 flex-1 text-slate-400 hover:text-slate-700">
+                <i class="fa-solid fa-calendar-check text-lg mb-0.5"></i>
+                <span class="text-[9px] tracking-tight">Vitals Diary</span>
+            </button>
+
+            <!-- Nav Item 4 -->
+            <button onclick="switchTab('chef')" id="nav-chef" class="flex flex-col items-center py-1 flex-1 text-slate-400 hover:text-slate-700">
+                <i class="fa-solid fa-wand-magic-sparkles text-lg mb-0.5"></i>
+                <span class="text-[9px] tracking-tight">AI Chef</span>
+            </button>
+        </nav>
+
+        <!-- Toast Notification system -->
+        <div id="toast-message" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-[11px] font-semibold py-2 px-4 rounded-full shadow-lg border border-slate-800 z-50 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+            <span id="toast-text">Logged successfully</span>
+        </div>
+
+    </div>
+
+    <script>
+        // --- BACKEND PROXY CONFIG ---
+        // All AI calls go through your Cloudflare Worker, which holds the
+        // Gemini API key as a server-side secret. No key is ever shipped to the browser.
+        // After deploying the Worker (see worker/README), paste its URL here (no trailing slash).
+        const API_BASE = "https://heartguard-proxy.YOUR-SUBDOMAIN.workers.dev";
+
+        // --- DATA STRUCTURES (THE PORTFOLIO DIET FOR STROKE PREVENTION) ---
+        const defaultFoodsToEat = [
+            {
+                id: "oats",
+                name: "Oatmeal & Oat Bran",
+                mechanism: "Viscous Soluble Fiber (Beta-Glucan)",
+                why: "Binds to dietary cholesterol inside the digestive tract, actively pulling it out before it enters your bloodstream.",
+                dose: "1 to 1.5 cups cooked daily. Delivers ~3g of beta-glucans.",
+                moderation: "Portion Limit: Max 1.5 cups cooked daily. Keep portion controlled; avoid adding high-glycemic sweeteners or refined sugars.",
+                icon: "fa-seedling text-amber-500",
+                svgColor: "#f59e0b",
+                defaultPrompt: "A high-resolution macro food photography of a warm oatmeal porridge bowl topped with wild organic raspberries and raw walnuts, studio lighting, highly appetizing, depth of field."
+            },
+            {
+                id: "nuts",
+                name: "Raw Almonds & Walnuts",
+                mechanism: "Monounsaturated/Polyunsaturated Fatty Acids",
+                why: "Rich in plant sterols, L-arginine, and monounsaturated lipids which lower LDL and improve blood vessel linings.",
+                dose: "About 30 to 45 grams daily.",
+                moderation: "Lipid & Portion Count Guard: Limit strictly to exactly 23-24 almonds OR 12-14 walnut halves (about 1.5 oz) per day. Never eat by the handful directly from the bag.",
+                icon: "fa-circle-dot text-amber-700",
+                svgColor: "#b45309",
+                defaultPrompt: "A professional food shot of premium organic raw almonds and shelled walnuts spilling out of a small elegant ceramic bowl, natural morning light, clean presentation."
+            },
+            {
+                id: "legumes",
+                name: "Lentils & Chickpeas",
+                mechanism: "Viscous Vegetable Fiber & Plant Protein",
+                why: "Highly digestible prebiotic fibers that actively slow cholesterol absorption and lower risk of arterial inflammation.",
+                dose: "At least 1/2 cup cooked cooked 3-4 times per week.",
+                moderation: "Portion Limit: 1 cup cooked max per meal. Ensure preparation is low-sodium to safeguard blood pressure.",
+                icon: "fa-boxes-packing text-emerald-600",
+                svgColor: "#10b981",
+                defaultPrompt: "A beautiful gourmet photograph of a healthy warm chickpea and brown lentil salad, garnished with green parsley and a splash of extra virgin olive oil, fine-dining aesthetic."
+            },
+            {
+                id: "salmon",
+                name: "Oily Coldwater Fish",
+                mechanism: "Omega-3 Fatty Acids (EPA & DHA)",
+                why: "Significantly lowers triglycerides, increases good HDL cholesterol size, and prevents dangerous stroke-inducing blood clots.",
+                dose: "150g fillet, grilled or poached, 2-3 times per week.",
+                moderation: "Lipid Guard: Max 150g (5.3 oz) cooked portion. Bake, grill, or poach. Do not pan-fry in butter or grease.",
+                icon: "fa-fish text-sky-500",
+                svgColor: "#0ea5e9",
+                defaultPrompt: "A close-up studio shot of a perfectly grilled wild salmon fillet garnished with a slice of fresh lemon, rosemary sprigs on a black slate platter."
+            },
+            {
+                id: "olive_oil",
+                name: "Extra Virgin Olive Oil",
+                mechanism: "Monounsaturated Fatty Acids (MUFAs)",
+                why: "Protects LDL from oxidizing (the process that creates hard plaque in arteries) and helps raise protective HDL levels.",
+                dose: "2-3 tablespoons daily as salad dressing or mild cooking agent.",
+                moderation: "Lipid Guard: Strictly limit to 1-2 measuring tablespoons daily. Highly calorie-dense; always measure with a spoon, never free-pour.",
+                icon: "fa-bottle-droplet text-lime-600",
+                svgColor: "#84cc16",
+                defaultPrompt: "An elegant glass cruet bottle filled with golden extra virgin olive oil, with olives on a branch next to it, warm rustic Mediterranean background, commercial product photography."
+            },
+            {
+                id: "soy",
+                name: "Tofu, Tempeh & Soy Milk",
+                mechanism: "Soy Plant Isoflavones",
+                why: "Replaces high-saturated fat meat proteins. Proven to reduce total blood cholesterol and lower systemic inflammation.",
+                dose: "50 grams of soy protein or half block of organic tofu daily.",
+                moderation: "Portion Limit: Limit to 1/2 block (150g) of firm tofu or 2 cups unsweetened soy milk daily.",
+                icon: "fa-cubes text-yellow-600",
+                svgColor: "#eab308",
+                defaultPrompt: "A neat culinary photography of sliced fresh organic white tofu cubes on a bamboo board, adjacent to fresh edamame beans in a bowl, soft natural background."
+            },
+            {
+                id: "sterols",
+                name: "Phytosterols & Stanols",
+                mechanism: "Plant Sterol Absorption Blockers",
+                why: "Chemically mimic cholesterol, occupying absorption pathways in the gut, thereby flushing excess cholesterol out of the body.",
+                dose: "2 grams daily from fortified low-fat dairy or supplements.",
+                moderation: "Targeted Intake: Maintain exactly 2 grams daily. Consuming larger volumes yields no additional medical or therapeutic value.",
+                icon: "fa-capsules text-indigo-500",
+                svgColor: "#6366f1",
+                defaultPrompt: "A minimalist studio shot showing healthy plant sterols enriched food items, like a small light yogurt pot next to sliced fresh oranges and barley grass, clinical and clean."
+            },
+            {
+                id: "berries",
+                name: "Apples, Berries & Pectin",
+                mechanism: "Soluble Fiber Pectin & Polyphenols",
+                why: "Pectin binds bile acids, driving down liver cholesterol reserves, while powerful anthocyanin antioxidants prevent arterial damage.",
+                dose: "1 medium apple or a cup of blueberries daily.",
+                moderation: "Portion Limit: 1 cup of fresh berries or 1 medium crisp apple daily. Portions are limited to avoid excess blood glucose/fructose spikes.",
+                icon: "fa-apple-whole text-rose-500",
+                svgColor: "#f43f5e",
+                defaultPrompt: "A dynamic studio composition of fresh organic dark blueberries, red strawberries, and a sliced crisp green apple, glistening water droplets, macro photography."
+            }
+        ];
+
+        const defaultFoodsToAvoid = [
+            {
+                id: "processed_meat",
+                name: "Sausages, Bacon & Salami",
+                risk: "Extreme Saturated Fat & Sodium Load",
+                why: "Triggers aggressive hepatic LDL generation and raises blood pressure drastically, causing immediate arterial stiffness.",
+                substitute: "Skinless organic chicken breast, wild tuna, or smoked tofu.",
+                icon: "fa-bacon text-rose-600",
+                defaultPrompt: "A warning-style dark commercial photograph of processed greasy red deli meats, bacon slabs, and pepperoni, highly artificial and high-contrast styling."
+            },
+            {
+                id: "trans_fats",
+                name: "Deep Fried Foods & Margarine",
+                risk: "Artificial Trans Fats / Hydrogenated Oils",
+                why: "The worst cardiovascular culinary fat. It actively destroys and lowers good HDL while skyrocketing bad LDL levels.",
+                substitute: "Air-fried dishes cooked with a spritz of high-quality cold-pressed olive or avocado oil.",
+                icon: "fa-burger text-amber-600",
+                defaultPrompt: "A dynamic commercial warning shot of greasy deep-fried french fries in a dark environment with oil splashes, highlighting unhealthy greasy textures."
+            },
+            {
+                id: "butter_ghee",
+                name: "Butter, Ghee & Solid Fats",
+                risk: "50%+ Pure Saturated Fatty Acids",
+                why: "Saturated structure packs closely together, forming heavy fatty deposits in the bloodstream and increasing clotting risk.",
+                substitute: "Extra virgin olive oil spread or fresh mashed ripe avocado.",
+                icon: "fa-cube text-yellow-500",
+                defaultPrompt: "A high-contrast macro studio shot of greasy solid yellow butter block melting on a rustic table, highlighting fatty oil separation."
+            },
+            {
+                id: "baked_goods",
+                name: "Commercial Pastries & Pies",
+                risk: "Combined Trans Fats & Refined Flour",
+                why: "Often contains cheap hydrogenated palm oils and refined sugars that trigger triglyceride spikes, rendering blood highly viscous.",
+                substitute: "Homemade oat cakes or whole wheat fruit muffins baked with cold-pressed olive oil.",
+                icon: "fa-cookie text-amber-500",
+                defaultPrompt: "A close-up shot of processed sweet glazed commercial donuts and sweet rolls under harsh artificial bakery lights."
+            },
+            {
+                id: "salty_snacks",
+                name: "Processed Chips & Broths",
+                risk: "Refined Carbohydrates & Sodium",
+                why: "Spikes arterial blood pressure instantly. Chronic high pressure damages vascular walls, predisposing them to stroke plaque rupture.",
+                substitute: "Unsalted roasted almonds or fresh raw carrot/cucumber sticks dipped in fresh garlic hummus.",
+                icon: "fa-bowl-rice text-orange-500",
+                defaultPrompt: "A sharp shot of highly seasoned processed salty snack foods spilling out of a package, contrasting with red warning elements."
+            },
+            {
+                id: "soda",
+                name: "Sugary Drinks & Sodas",
+                risk: "Refined High Fructose Sugars",
+                why: "Causes the liver to aggressively output VLDL (very low-density bad cholesterol) and spikes dangerous triglyceride counts.",
+                substitute: "Sparkling mineral water infused with fresh cucumber slices and squeezed fresh lime juice.",
+                icon: "fa-glass-water text-purple-500",
+                defaultPrompt: "An warning shot of dark fizzy soda pouring into a glass, highlighting excessive artificial sugar syrup droplets."
+            }
+        ];
+
+        // --- APP STATE ---
+        let state = {
+            currentTab: 'dashboard',
+            dietSubTab: 'eat',
+            vitals: [],
+            foodsToEat: [...defaultFoodsToEat],
+            foodsToAvoid: [...defaultFoodsToAvoid],
+            checklist: {
+                oats: false,
+                nuts: false,
+                veggies: false,
+                no_junk: false,
+                cardio: false,
+                water: false
+            },
+            customGoodItems: [], // Extra healthy foods logged today
+            todaySlipups: [],     // Harmful foods eaten today
+            
+            // Dynamic Compare State
+            oldTest: {
+                label: "old_test.jpeg",
+                total: 254,
+                ldl: 177,
+                hdl: 49,
+                triglycerides: 147
+            },
+            newTest: {
+                label: "new_test.jpeg",
+                total: 276,
+                ldl: 199,
+                hdl: 39,
+                triglycerides: 136
+            },
+            newTestImg: "", // Base64 string of newly uploaded image report
+
+            // AI Vision temporary variables
+            classifierSelectedImage: "", // Base64 compressed representation of food classifier snap
+            auditorSelectedImage: ""      // Base64 compressed representation of intake auditor snap
+        };
+
+        // --- CUSTOM CONFIRM MODAL CONTROLLER (Safe alternative to confirm) ---
+        let confirmPromiseResolve = null;
+
+        function showConfirmDialog(title, text) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-text').innerText = text;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            return new Promise((resolve) => {
+                confirmPromiseResolve = resolve;
+            });
+        }
+
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            if (confirmPromiseResolve) confirmPromiseResolve(true);
+        });
+
+        document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            if (confirmPromiseResolve) confirmPromiseResolve(false);
+        });
+
+        // --- CORE TAB SWITCHING & SETUP ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('text-indigo-600', 'font-extrabold');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('text-indigo-600', 'font-extrabold');
+
+            state.currentTab = tabId;
+            saveStateToStorage();
+        }
+
+        function switchDietSubTab(subTab) {
+            state.dietSubTab = subTab;
+            
+            const btnEat = document.getElementById('btn-diet-eat');
+            const btnAvoid = document.getElementById('btn-diet-avoid');
+            const blockEat = document.getElementById('diet-subtab-eat');
+            const blockAvoid = document.getElementById('diet-subtab-avoid');
+
+            if (subTab === 'eat') {
+                btnEat.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-slate-900 shadow-sm";
+                btnAvoid.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800";
+                blockEat.classList.remove('hidden');
+                blockAvoid.classList.add('hidden');
+            } else {
+                btnAvoid.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-slate-900 shadow-sm";
+                btnEat.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800";
+                blockAvoid.classList.remove('hidden');
+                blockEat.classList.add('hidden');
+            }
+            saveStateToStorage();
+        }
+
+        // --- INITIALIZATION & LOCALSTORAGE ---
+        window.onload = function() {
+            loadStateFromStorage();
+            renderDynamicComparisonUI();
+            renderFoods();
+            renderChecklist();
+            renderVitalsHistory();
+            renderChefIngredients();
+            
+            // Automatically prompt warning if LDL is dangerously high in new test
+            setTimeout(() => {
+                openUrgentAlert();
+            }, 800);
+        };
+
+        function saveStateToStorage() {
+            localStorage.setItem('heartguard_app_state_v3_vision', JSON.stringify(state));
+        }
+
+        function loadStateFromStorage() {
+            const saved = localStorage.getItem('heartguard_app_state_v3_vision');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.vitals) state.vitals = parsed.vitals;
+                    if (parsed.checklist) state.checklist = parsed.checklist;
+                    if (parsed.foodsToEat) state.foodsToEat = parsed.foodsToEat;
+                    if (parsed.foodsToAvoid) state.foodsToAvoid = parsed.foodsToAvoid;
+                    if (parsed.customGoodItems) state.customGoodItems = parsed.customGoodItems;
+                    if (parsed.todaySlipups) state.todaySlipups = parsed.todaySlipups;
+                    if (parsed.oldTest) state.oldTest = parsed.oldTest;
+                    if (parsed.newTest) state.newTest = parsed.newTest;
+                    if (parsed.newTestImg) state.newTestImg = parsed.newTestImg;
+                    if (parsed.currentTab) {
+                        switchTab(parsed.currentTab);
+                    }
+                    if (parsed.dietSubTab) {
+                        switchDietSubTab(parsed.dietSubTab);
+                    }
+                } catch (e) {
+                    console.error("Failed to restore app state", e);
+                }
+            }
+        }
+
+        // Reusable Helper for High-Quality Image Compression
+        function compressAndConvertImage(file, maxDim, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+                    callback(compressedBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- DYNAMIC DIET VISION CLASSIFIER CONTROLLER ---
+        function triggerClassifierFileSelect() {
+            document.getElementById('classifier-file-input').click();
+        }
+
+        function handleClassifierFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast("Compressing snapped image...");
+            compressAndConvertImage(file, 350, (base64String) => {
+                state.classifierSelectedImage = base64String;
+                
+                const previewContainer = document.getElementById('classifier-image-preview-container');
+                const previewImg = document.getElementById('classifier-image-preview-img');
+                previewImg.src = base64String;
+                previewContainer.classList.remove('hidden');
+                showToast("Food picture captured & loaded!");
+            });
+        }
+
+        function clearClassifierPreviewImage(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('classifier-file-input').value = "";
+            state.classifierSelectedImage = "";
+            document.getElementById('classifier-image-preview-container').classList.add('hidden');
+            document.getElementById('classifier-image-preview-img').src = "";
+            showToast("Classifier snap removed.");
+        }
+
+        // --- DYNAMIC DAILY ADHERENCE AUDITOR CONTROLLER ---
+        function triggerAuditorFileSelect() {
+            document.getElementById('auditor-file-input').click();
+        }
+
+        function handleAuditorFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast("Preparing image for clinical analysis...");
+            compressAndConvertImage(file, 350, (base64String) => {
+                state.auditorSelectedImage = base64String;
+                
+                const previewContainer = document.getElementById('auditor-image-preview-container');
+                const previewImg = document.getElementById('auditor-image-preview-img');
+                previewImg.src = base64String;
+                previewContainer.classList.remove('hidden');
+                showToast("Intake food snap ready!");
+            });
+        }
+
+        function clearAuditorPreviewImage(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('auditor-file-input').value = "";
+            state.auditorSelectedImage = "";
+            document.getElementById('auditor-image-preview-container').classList.add('hidden');
+            document.getElementById('auditor-image-preview-img').src = "";
+            showToast("Auditor snap removed.");
+        }
+
+        function renderDynamicComparisonUI() {
+            const ldlDiff = state.newTest.ldl - state.oldTest.ldl;
+            const ldlIncreased = ldlDiff > 0;
+
+            const card = document.getElementById('risk-trajectory-card');
+            const badge = document.getElementById('risk-trajectory-badge');
+            const title = document.getElementById('risk-trajectory-title');
+            const text = document.getElementById('risk-trajectory-text');
+            const icon = document.getElementById('ldl-trend-icon');
+
+            // 1. Risk Trajectory Panel UI styling
+            if (state.newTest.ldl < 100) {
+                // Optimal Status Achieved!
+                card.className = "bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300";
+                badge.className = "px-3 py-1 bg-white/20 backdrop-blur-sm text-[11px] font-extrabold tracking-widest rounded-full uppercase border border-white/20";
+                badge.innerText = "Optimal Range";
+                title.innerText = "Risk Level: Low";
+                text.innerHTML = `Excellent work! Your LDL has dropped to <span class="underline underline-offset-2 font-bold">${state.newTest.ldl} mg/dl</span> (Optimal). Your protective HDL is <span class="underline underline-offset-2">${state.newTest.hdl} mg/dl</span>. Your plaque expansion has stabilized.`;
+                icon.className = "fa-solid fa-circle-check text-sm text-white animate-pulse";
+            } else if (!ldlIncreased) {
+                // Improving Trend
+                card.className = "bg-gradient-to-r from-indigo-500 to-emerald-600 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300";
+                badge.className = "px-3 py-1 bg-white/20 backdrop-blur-sm text-[11px] font-extrabold tracking-widest rounded-full uppercase border border-white/20";
+                badge.innerText = "Improving Trend";
+                title.innerText = "Risk Level: Decreasing";
+                text.innerHTML = `Your cholesterol is trending down! Your LDL has fallen to <span class="underline underline-offset-2 font-bold">${state.newTest.ldl} mg/dl</span> (was ${state.oldTest.ldl} mg/dl) and HDL is <span class="underline underline-offset-2 font-bold">${state.newTest.hdl} mg/dl</span>. Your vascular margins are recovering. Keep up the diet portfolio!`;
+                icon.className = "fa-solid fa-arrow-trend-down text-sm text-white animate-bounce";
+            } else {
+                // Worsened Trend
+                card.className = "bg-gradient-to-r from-rose-500 to-rose-600 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300";
+                badge.className = "px-3 py-1 bg-white/20 backdrop-blur-sm text-[11px] font-extrabold tracking-widest rounded-full uppercase border border-white/20";
+                badge.innerText = "Worsened Trend";
+                title.innerText = "Risk Level: High";
+                text.innerHTML = `Your cholesterol has climbed in <strong class="font-bold">${state.newTest.label}</strong> compared to <strong class="font-bold">${state.oldTest.label}</strong>. Your LDL reached <span class="underline underline-offset-2 font-bold">${state.newTest.ldl} mg/dl</span> and HDL dropped to <span class="underline underline-offset-2 font-bold">${state.newTest.hdl} mg/dl</span>, driving up atherosclerotic blockages. Let's reverse this!`;
+                icon.className = "fa-solid fa-arrow-trend-up text-sm text-white animate-bounce";
+            }
+
+            // 2. Labels & Values in Card
+            document.getElementById('old-test-label').innerText = `${state.oldTest.label} LDL`;
+            document.getElementById('old-test-ldl-val').innerHTML = `${state.oldTest.ldl} <span class="text-xs font-normal">mg/dl</span>`;
+            document.getElementById('new-test-label').innerText = `${state.newTest.label} LDL`;
+            document.getElementById('new-test-ldl-val').innerHTML = `${state.newTest.ldl} <span class="text-xs font-normal">mg/dl</span> <i id="ldl-trend-icon" class="${icon.className}"></i>`;
+
+            // 3. Subheadings & Comparisons
+            document.getElementById('comparison-card-sub').innerText = `${state.oldTest.label} vs. ${state.newTest.label}`;
+
+            // 4. Slider text fields
+            document.getElementById('panel-total-val').innerHTML = `${state.newTest.total} mg/dl <span class="text-slate-400 font-normal">(was ${state.oldTest.total})</span>`;
+            const totalStatus = state.newTest.total >= 240 ? "High" : (state.newTest.total >= 200 ? "Borderline High" : "Desirable");
+            const totalColor = state.newTest.total >= 240 ? "text-rose-500" : (state.newTest.total >= 200 ? "text-amber-500" : "text-emerald-500");
+            document.getElementById('total-status-text').className = `font-bold ${totalColor}`;
+            document.getElementById('total-status-text').innerText = `Your Level: ${state.newTest.total} (${totalStatus})`;
+
+            document.getElementById('panel-ldl-val').innerHTML = `${state.newTest.ldl} mg/dl <span class="text-slate-400 font-normal">(was ${state.oldTest.ldl})</span>`;
+            const ldlStatus = state.newTest.ldl >= 190 ? "Very High" : (state.newTest.ldl >= 160 ? "High" : (state.newTest.ldl >= 130 ? "Borderline" : "Optimal"));
+            const ldlColor = state.newTest.ldl >= 160 ? "text-rose-500" : (state.newTest.ldl >= 130 ? "text-amber-500" : "text-emerald-500");
+            document.getElementById('ldl-status-text').className = `font-bold ${ldlColor} text-right`;
+            document.getElementById('ldl-status-text').innerText = `Your Level: ${state.newTest.ldl} (${ldlStatus})`;
+
+            document.getElementById('panel-hdl-val').innerHTML = `${state.newTest.hdl} mg/dl <span class="text-slate-400 font-normal">(was ${state.oldTest.hdl})</span>`;
+            const hdlStatus = state.newTest.hdl < 40 ? "Low (High Cardiovascular Risk)" : "Optimal Range";
+            const hdlColor = state.newTest.hdl < 40 ? "text-rose-500" : "text-emerald-500";
+            document.getElementById('hdl-status-text').className = `font-bold ${hdlColor}`;
+            document.getElementById('hdl-status-text').innerText = `Your Level: ${state.newTest.hdl} (${hdlStatus})`;
+
+            // 5. Update Alerts values
+            document.getElementById('alert-old-total').innerText = `${state.oldTest.total} mg/dl`;
+            document.getElementById('alert-old-label').innerText = state.oldTest.label;
+            document.getElementById('alert-new-total').innerText = `${state.newTest.total} mg/dl`;
+            document.getElementById('alert-new-label').innerText = state.newTest.label;
+
+            document.getElementById('alert-old-ldl').innerText = `${state.oldTest.ldl} mg/dl`;
+            document.getElementById('alert-new-ldl').innerText = `${state.newTest.ldl} mg/dl`;
+            document.getElementById('alert-old-hdl').innerText = `${state.oldTest.hdl} mg/dl`;
+            document.getElementById('alert-new-hdl').innerText = `${state.newTest.hdl} mg/dl`;
+        }
+
+        // --- SUBMIT NEW PANEL AND CALIBRATE MATRIX ---
+        function openUploadTestModal() {
+            document.getElementById('upload-test-modal').classList.remove('hidden');
+        }
+
+        function closeUploadTestModal() {
+            document.getElementById('upload-test-modal').classList.add('hidden');
+            clearUploadedFile();
+        }
+
+        function triggerFileSelect() {
+            document.getElementById('report-file-input').click();
+        }
+
+        function handleReportFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('upload-text-status').innerText = "Compressing document on-device...";
+            document.getElementById('upload-icon-status').className = "fa-solid fa-circle-notch animate-spin text-2xl text-indigo-500";
+
+            compressAndConvertImage(file, 400, (compressedBase64) => {
+                state.newTestImg = compressedBase64;
+                document.getElementById('uploaded-preview-img').src = compressedBase64;
+                document.getElementById('uploaded-preview-container').classList.remove('hidden');
+                showToast("Lab report image loaded & compressed!");
+            });
+        }
+
+        function clearUploadedFile(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('report-file-input').value = "";
+            state.newTestImg = "";
+            document.getElementById('uploaded-preview-container').classList.add('hidden');
+            document.getElementById('uploaded-preview-img').src = "";
+            document.getElementById('upload-text-status').innerText = "Tap to browse or take a photo of your new test results.";
+            document.getElementById('upload-icon-status').className = "fa-solid fa-cloud-arrow-up text-2xl text-slate-400";
+            document.getElementById('extraction-status').classList.add('hidden');
+        }
+
+        // Helper to extract medical data from the uploaded report image using Gemini
+        async function extractLipidDataFromImage(base64Image) {
+            const statusBox = document.getElementById('extraction-status');
+            const statusText = document.getElementById('extraction-status-text');
+            statusBox.classList.remove('hidden');
+            statusText.innerText = "Connecting to AI document parser...";
+
+            // Clean the base64 prefix
+            const cleanBase64 = base64Image.split(',')[1];
+            
+            const promptText = `
+                You are a highly precise clinical laboratory data assistant. Read the attached medical lipid profile lab report.
+                Extract the exact numeric values (in mg/dl) for:
+                - Total Serum Cholesterol
+                - LDL Cholesterol
+                - HDL Cholesterol
+                - Triglycerides
+                
+                Also read or determine an appropriate short name/date for this test (e.g. "report_june_2026").
+                If any values cannot be read, output your best confident estimate based on standard laboratory report presentation.
+                Return strictly a valid JSON conforming to the requested schema.
+            `;
+
+            const systemPrompt = "Extract accurate numeric lab test parameters directly from medical report layouts. Only return the requested JSON schema.";
+
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    total: { type: "INTEGER", description: "Total Serum Cholesterol value in mg/dl" },
+                    ldl: { type: "INTEGER", description: "LDL Cholesterol value in mg/dl" },
+                    hdl: { type: "INTEGER", description: "HDL Cholesterol value in mg/dl" },
+                    triglycerides: { type: "INTEGER", description: "Triglycerides value in mg/dl" },
+                    testName: { type: "STRING", description: "A clean extracted test date or descriptive file name" }
+                },
+                required: ["total", "ldl", "hdl", "triglycerides"]
+            };
+
+            const partsArray = [
+                { text: promptText },
+                {
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: cleanBase64
+                    }
+                }
+            ];
+
+            let success = false;
+            let parsedData = null;
+            let delay = 1000;
+
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    statusText.innerText = `Analyzing image contents (Attempt ${attempt + 1}/3)...`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+
+                    const payload = {
+                        contents: [{ role: "user", parts: partsArray }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: responseSchema
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        parsedData = JSON.parse(result.candidates[0].content.parts[0].text);
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Extraction attempt ${attempt + 1} failed. Retrying...`, err);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+
+            if (success && parsedData) {
+                statusBox.classList.add('hidden');
+                return parsedData;
+            } else {
+                statusText.innerHTML = `<span class="text-rose-600 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Extraction failed.</span> Please enter values manually.`;
+                throw new Error("Failed to extract data via Gemini");
+            }
+        }
+
+        async function submitNewLabReport() {
+            let newLdl = parseInt(document.getElementById('input-ldl').value);
+            let newHdl = parseInt(document.getElementById('input-hdl').value);
+            let newTotal = parseInt(document.getElementById('input-total').value);
+            let newTrig = parseInt(document.getElementById('input-trig').value);
+            let customName = document.getElementById('input-test-name').value.trim();
+
+            const submitBtn = document.getElementById('btn-submit-lab');
+
+            // Check if user left numeric fields blank but uploaded an image
+            if (!newLdl || !newHdl || !newTotal) {
+                if (state.newTestImg) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Extracting...`;
+                    try {
+                        const extracted = await extractLipidDataFromImage(state.newTestImg);
+                        newLdl = extracted.ldl;
+                        newHdl = extracted.hdl;
+                        newTotal = extracted.total;
+                        newTrig = extracted.triglycerides || 150;
+                        customName = customName || extracted.testName || "Extracted Report";
+                        
+                        // Populate UI inputs for transparency
+                        document.getElementById('input-ldl').value = newLdl;
+                        document.getElementById('input-hdl').value = newHdl;
+                        document.getElementById('input-total').value = newTotal;
+                        document.getElementById('input-trig').value = newTrig;
+                        document.getElementById('input-test-name').value = customName;
+                        
+                        showToast("AI parsed lab parameters successfully!");
+                    } catch (err) {
+                        showToast("Failed to parse image. Please type the values manually.");
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Save & Dynamic Compare`;
+                        return;
+                    }
+                } else {
+                    showToast("Please enter values or upload an image for AI extraction!");
+                    return;
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Save & Dynamic Compare`;
+
+            // Fallback for triglycerides
+            newTrig = newTrig || 150;
+
+            // Shift current newTest values to become the oldTest historic references
+            state.oldTest = {
+                label: state.newTest.label,
+                total: state.newTest.total,
+                ldl: state.newTest.ldl,
+                hdl: state.newTest.hdl,
+                triglycerides: state.newTest.triglycerides
+            };
+
+            // Set up the updated latest test values
+            state.newTest = {
+                label: customName || `lab_report_${new Date().toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}.jpeg`,
+                total: newTotal,
+                ldl: newLdl,
+                hdl: newHdl,
+                triglycerides: newTrig
+            };
+
+            saveStateToStorage();
+            renderDynamicComparisonUI();
+            
+            // Clear inputs and hide uploader modal
+            document.getElementById('input-ldl').value = "";
+            document.getElementById('input-hdl').value = "";
+            document.getElementById('input-total').value = "";
+            document.getElementById('input-trig').value = "";
+            document.getElementById('input-test-name').value = "";
+            closeUploadTestModal();
+
+            showToast("Comparison Matrix updated with new data!");
+            
+            // Bring user back to dashboard and scroll to comparison metrics
+            switchTab('dashboard');
+            document.getElementById('risk-trajectory-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        // --- DIALOG / MODAL FUNCTIONS ---
+        function openUrgentAlert() {
+            document.getElementById('urgent-alert').classList.remove('hidden');
+        }
+
+        function closeUrgentAlert() {
+            document.getElementById('urgent-alert').classList.add('hidden');
+        }
+
+        function openImageViewer(src, caption) {
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('viewer-caption').innerText = caption;
+            document.getElementById('image-viewer-modal').classList.remove('hidden');
+        }
+
+        function closeImageViewer() {
+            document.getElementById('image-viewer-modal').classList.add('hidden');
+        }
+
+        // --- RENDER FOOD DIET TABLES ---
+        function renderFoods() {
+            const eatContainer = document.getElementById('eat-foods-container');
+            const avoidContainer = document.getElementById('avoid-foods-container');
+
+            eatContainer.innerHTML = state.foodsToEat.map(food => `
+                <div class="bg-white rounded-3xl p-4.5 shadow-sm border border-slate-100 flex flex-col gap-3 relative overflow-hidden">
+                    <div class="flex gap-3.5">
+                        <div class="w-12 h-12 shrink-0 rounded-2xl bg-slate-50 flex items-center justify-center text-xl shadow-inner border border-slate-100">
+                            <i class="fa-solid ${food.icon}"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${food.name}</h4>
+                            <span class="text-[10px] uppercase font-bold tracking-wide text-emerald-600 block mt-0.5">${food.mechanism}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs">
+                        <p class="text-slate-500 leading-relaxed">${food.why}</p>
+                        <div class="bg-emerald-50/50 rounded-xl p-2.5 border border-emerald-100/50 flex flex-col gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-cookie text-emerald-600 text-xs shrink-0"></i>
+                                <span class="text-slate-700 font-medium">Daily Target Dose: <strong class="font-bold text-emerald-800">${food.dose}</strong></span>
+                            </div>
+                            ${food.moderation ? `
+                            <div class="flex items-start gap-2 pt-1.5 border-t border-emerald-150/50">
+                                <i class="fa-solid fa-scale-balanced text-amber-600 text-xs shrink-0 mt-0.5"></i>
+                                <span class="text-slate-700 font-medium">Moderation Guard: <strong class="font-extrabold text-amber-800">${food.moderation}</strong></span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100/80 flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <button onclick="triggerImageGeneration('${food.id}', '${food.name}')" id="btn-gen-${food.id}" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-image"></i> Show Realistic Picture
+                            </button>
+                        </div>
+                        <span class="text-[9px] text-slate-400 font-medium italic">Target: Lower LDL cholesterol</span>
+                    </div>
+
+                    <div id="img-holder-${food.id}" class="hidden rounded-2xl overflow-hidden border border-slate-100 max-h-48 mt-2 relative group cursor-pointer" onclick="zoomFoodImage('${food.id}', '${food.name}')">
+                        <img id="img-${food.id}" src="" alt="${food.name}" class="w-full h-40 object-cover">
+                        <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i> Zoom Picture
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            avoidContainer.innerHTML = state.foodsToAvoid.map(food => `
+                <div class="bg-white rounded-3xl p-4.5 shadow-sm border border-slate-100 flex flex-col gap-3 relative overflow-hidden">
+                    <div class="flex gap-3.5">
+                        <div class="w-12 h-12 shrink-0 rounded-2xl bg-rose-50 flex items-center justify-center text-xl shadow-inner border border-rose-100">
+                            <i class="fa-solid ${food.icon}"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-slate-800 text-sm leading-tight">${food.name}</h4>
+                            <span class="text-[10px] uppercase font-bold tracking-wide text-rose-500 block mt-0.5">${food.risk}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <p class="text-slate-500 leading-relaxed">${food.why}</p>
+                        <div class="bg-rose-50/50 rounded-xl p-2.5 border border-rose-100/50 flex items-center gap-2">
+                            <i class="fa-solid fa-arrows-spin text-rose-500 text-xs shrink-0"></i>
+                            <span class="text-slate-700 font-medium">Healthy Substitute: <strong class="font-bold text-rose-800">${food.substitute}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100/80 flex items-center justify-between gap-2 flex-wrap">
+                        <button onclick="triggerImageGeneration('${food.id}', '${food.name}', true)" id="btn-gen-${food.id}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-image"></i> Show Danger Picture
+                        </button>
+                        <span class="text-[9px] text-rose-500 font-bold uppercase tracking-wider"><i class="fa-solid fa-ban"></i> Avoid Completely</span>
+                    </div>
+
+                    <div id="img-holder-${food.id}" class="hidden rounded-2xl overflow-hidden border border-slate-100 max-h-48 mt-2 relative group cursor-pointer" onclick="zoomFoodImage('${food.id}', '${food.name}')">
+                        <img id="img-${food.id}" src="" alt="${food.name}" class="w-full h-40 object-cover">
+                        <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i> Zoom Picture
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- DYNAMIC ADHERENCE CHECKLIST ---
+        const checklistLabels = {
+            oats: "Cooked Oats / Soluble Fiber",
+            nuts: "Handful Raw Almonds/Walnuts",
+            veggies: "Ate Fresh Beans & Legumes",
+            no_junk: "No Saturated/Trans Fats eaten",
+            cardio: "Active Cardio Exercise (30m)",
+            water: "8 Glasses of Water Hydration"
+        };
+
+        function renderChecklist() {
+            const listContainer = document.getElementById('dashboard-checklist');
+            listContainer.innerHTML = Object.keys(state.checklist).map(key => `
+                <label class="flex items-center gap-2.5 p-3 rounded-2xl border transition-all ${state.checklist[key] ? 'bg-emerald-50/60 border-emerald-100 text-slate-800 font-semibold' : 'bg-slate-50/50 border-slate-100 text-slate-500'} cursor-pointer">
+                    <input type="checkbox" class="rounded text-emerald-500 focus:ring-emerald-400 w-4.5 h-4.5 cursor-pointer accent-emerald-500" ${state.checklist[key] ? 'checked' : ''} onchange="toggleChecklist('${key}')">
+                    <span class="text-[11px] leading-tight select-none">${checklistLabels[key]}</span>
+                </label>
+            `).join('');
+
+            // Render Custom extra healthy foods
+            const customGoodsContainer = document.getElementById('custom-goods-list');
+            const extraContainer = document.getElementById('adherence-extra-container');
+            if (state.customGoodItems && state.customGoodItems.length > 0) {
+                extraContainer.classList.remove('hidden');
+                customGoodsContainer.innerHTML = state.customGoodItems.map(item => `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/40 border border-emerald-100 text-[11px] text-slate-700">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-square-check text-emerald-500 text-sm"></i>
+                            <div>
+                                <span class="font-bold text-emerald-950">${item.name}</span>
+                                <span class="text-[9px] text-slate-400 block">${item.impact}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeCustomTrackerItem('${item.id}', true)" class="text-slate-400 hover:text-rose-500 px-1.5"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    </div>
+                `).join('');
+            } else {
+                extraContainer.classList.add('hidden');
+            }
+
+            // Render Unhealthy logged foods with custom soft warning cards
+            const customSlipupsContainer = document.getElementById('custom-slipups-list');
+            const warningsContainer = document.getElementById('adherence-warnings-container');
+            if (state.todaySlipups && state.todaySlipups.length > 0) {
+                warningsContainer.classList.remove('hidden');
+                customSlipupsContainer.innerHTML = state.todaySlipups.map(item => `
+                    <div class="p-3 rounded-2xl bg-rose-50/60 border border-rose-100 text-[11px] space-y-1.5 relative overflow-hidden">
+                        <div class="absolute right-3 top-2.5 flex items-center gap-1.5">
+                            <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 text-[8px] font-extrabold uppercase rounded">-15% Score</span>
+                            <button onclick="removeCustomTrackerItem('${item.id}', false)" class="text-slate-400 hover:text-rose-500 px-1"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        </div>
+                        <div class="flex items-center gap-1.5 font-bold text-rose-950">
+                            <i class="fa-solid fa-shield-heart text-rose-500"></i>
+                            <span>Logged: ${item.name}</span>
+                        </div>
+                        <p class="text-slate-700 leading-relaxed">${item.warning}</p>
+                        <div class="p-2 bg-amber-50/80 rounded-xl border border-amber-100 text-[10px] text-slate-700">
+                            <strong>Lipid Impact:</strong> This worsens your ${state.newTest.ldl} mg/dl LDL and threatens to further reduce your ${state.newTest.hdl} mg/dl protective HDL. 
+                            <span class="block mt-0.5 font-semibold text-rose-700"><i class="fa-solid fa-arrows-turn-right text-[8px]"></i> Try instead: ${item.substitute}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                warningsContainer.classList.add('hidden');
+            }
+
+            updateAdherenceProgress();
+        }
+
+        function toggleChecklist(key) {
+            state.checklist[key] = !state.checklist[key];
+            saveStateToStorage();
+            renderChecklist();
+            showToast("Progress Updated!");
+        }
+
+        function updateAdherenceProgress() {
+            const total = Object.keys(state.checklist).length;
+            const checked = Object.values(state.checklist).filter(v => v).length;
+            
+            // Baseline percentage from default items
+            let percentage = Math.round((checked / total) * 100);
+
+            // Add +10% for each extra healthy food item
+            if (state.customGoodItems && state.customGoodItems.length > 0) {
+                percentage += (state.customGoodItems.length * 10);
+            }
+
+            // Deduct -15% for each slip-up item
+            if (state.todaySlipups && state.todaySlipups.length > 0) {
+                percentage -= (state.todaySlipups.length * 15);
+            }
+
+            // Bound percentage between 0 and 100
+            percentage = Math.max(0, Math.min(100, percentage));
+
+            const percentLabel = document.getElementById('adherence-percent');
+            const barElement = document.getElementById('adherence-bar');
+            
+            percentLabel.innerText = `${percentage}%`;
+            barElement.style.width = `${percentage}%`;
+
+            // Style progress bar dynamically depending on warnings
+            if (state.todaySlipups && state.todaySlipups.length > 0) {
+                barElement.className = "bg-amber-500 h-full transition-all duration-500";
+                percentLabel.className = "text-amber-600 font-bold flex items-center gap-1";
+                percentLabel.innerHTML = `${percentage}% <span class="text-[9px] px-1 bg-amber-100 rounded text-amber-800 font-medium font-mono">Plaque Warning Active</span>`;
+            } else {
+                barElement.className = "bg-emerald-500 h-full transition-all duration-500";
+                percentLabel.className = "text-emerald-600 font-bold";
+            }
+        }
+
+        // --- DYNAMIC MULTIMODAL AI DAILY FOOD AUDITOR ---
+        async function analyzeAndLogAdherenceFood() {
+            const inputField = document.getElementById('adherence-custom-input');
+            const foodNameText = inputField.value.trim();
+            const imageBase64Data = state.auditorSelectedImage; // Holds base64 if selected
+            const btn = document.getElementById('btn-log-adherence');
+            const statusCard = document.getElementById('adherence-auditor-status');
+
+            if (!foodNameText && !imageBase64Data) {
+                showToast("Please write a food name or snap a picture first!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
+            statusCard.classList.remove('hidden');
+            statusCard.className = "p-2.5 rounded-xl text-[10px] leading-relaxed bg-slate-100 border border-slate-200 text-slate-600 animate-pulse";
+            statusCard.innerHTML = `<i class="fa-solid fa-microchip animate-spin text-emerald-500 mr-1.5"></i> Running AI multi-factor lipid safety analysis...`;
+
+            // 1. Set up Prompts & Clinical Focus for Vision / Text
+            let promptText = "";
+            if (imageBase64Data) {
+                promptText = `Evaluate the food shown in this image. `;
+                if (foodNameText) {
+                    promptText += `The user labeled it as "${foodNameText}". `;
+                }
+                promptText += `Identify the dishes/ingredients. Assess if it is heart-healthy (lowers LDL below ${state.newTest.ldl} and boosts HDL above ${state.newTest.hdl}) or unhealthy (elevates cholesterol, high trans-fats, high sodium, or heavy saturated fats). Return strictly a valid JSON conforming to the requested schema.`;
+            } else {
+                promptText = `Evaluate the food item eaten today: "${foodNameText}". Determine whether it is "healthy" (supports lowering LDL below ${state.newTest.ldl} mg/dl and rising HDL above ${state.newTest.hdl} mg/dl) or "unhealthy" (elevates cholesterol, drives trans fats, high sodium, or heavy saturated fat, increasing stroke risk for a patient with ${state.newTest.ldl} mg/dl LDL and ${state.newTest.hdl} mg/dl HDL). Return strictly a valid JSON conforming to the requested schema.`;
+            }
+
+            const systemPrompt = `You are an elite clinical cardiologist and lipidologist. Evaluate daily food intake visually or contextually. If it's healthy, explain why. If it's unhealthy, provide a soft but strict clinical warning detailing how it hardens arteries (atherosclerosis) or leads to ischemic stroke risk given the patient's current dangerous lipid numbers (LDL: ${state.newTest.ldl}, HDL: ${state.newTest.hdl}). Suggest a heart-safe substitute.`;
+
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    isHealthy: { type: "BOOLEAN", description: "true if heart-healthy and low in saturated fats/sodium, false if harmful to coronary pathways" },
+                    foodName: { type: "STRING", description: "Standardized food/dish name identified" },
+                    clinicalExplanation: { type: "STRING", description: "1-sentence description of the biological lipid mechanism" },
+                    warning: { type: "STRING", description: "ONLY if isHealthy is false: 1-2 sentences of cardiovascular block warning" },
+                    substitute: { type: "STRING", description: "Optimal heart-safe, low-cholesterol alternative option" }
+                },
+                required: ["isHealthy", "foodName", "clinicalExplanation", "substitute"]
+            };
+
+            // 2. Prepare Payload (Supporting Text, Image, or both)
+            const partsArray = [{ text: promptText }];
+            if (imageBase64Data) {
+                // Extract clean base64 string without data prefix
+                const cleanBase64 = imageBase64Data.split(',')[1];
+                partsArray.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: cleanBase64
+                    }
+                });
+            }
+
+            let success = false;
+            let parsedData = null;
+            let delay = 1000;
+
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+
+                    const payload = {
+                        contents: [{ role: "user", parts: partsArray }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: responseSchema
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        parsedData = JSON.parse(result.candidates[0].content.parts[0].text);
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Intake Audit Attempt ${attempt + 1} failed. Retrying...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+
+            statusCard.classList.remove('animate-pulse');
+
+            if (success && parsedData) {
+                const isHealthy = parsedData.isHealthy;
+                const itemId = "tracker_" + Date.now();
+
+                if (isHealthy) {
+                    const newItem = {
+                        id: itemId,
+                        name: parsedData.foodName,
+                        impact: parsedData.clinicalExplanation
+                    };
+                    if (!state.customGoodItems) state.customGoodItems = [];
+                    state.customGoodItems.push(newItem);
+                    
+                    statusCard.className = "p-2.5 rounded-xl text-[10px] leading-relaxed bg-emerald-50 border border-emerald-100 text-emerald-800";
+                    statusCard.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Identified: <strong>${parsedData.foodName}</strong>. verified! Added as a +10% adherence booster.`;
+                    showToast("Bonus healthy food logged!");
+                } else {
+                    const newItem = {
+                        id: itemId,
+                        name: parsedData.foodName,
+                        warning: parsedData.warning || "Saturated fats cause direct arterial build-up, blocking coronary arteries.",
+                        substitute: parsedData.substitute || "Oats or avocado spread"
+                    };
+                    if (!state.todaySlipups) state.todaySlipups = [];
+                    state.todaySlipups.push(newItem);
+
+                    statusCard.className = "p-2.5 rounded-xl text-[10px] leading-relaxed bg-rose-50 border border-rose-100 text-rose-800";
+                    statusCard.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500 mr-1 animate-bounce"></i> Identified: <strong>${parsedData.foodName}</strong>. Dangerous lipid elements flagged!`;
+                    showToast("Unhealthy food warning logged!");
+                }
+
+                saveStateToStorage();
+                renderChecklist();
+                inputField.value = "";
+                clearAuditorPreviewImage();
+            } else {
+                statusCard.className = "p-2.5 rounded-xl text-[10px] leading-relaxed bg-amber-50 border border-amber-200 text-amber-900";
+                statusCard.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> Unable to verify food connection right now. Please try again.`;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Log`;
+            
+            setTimeout(() => {
+                statusCard.classList.add('hidden');
+            }, 6500);
+        }
+
+        function removeCustomTrackerItem(id, isGood) {
+            if (isGood) {
+                state.customGoodItems = state.customGoodItems.filter(item => item.id !== id);
+            } else {
+                state.todaySlipups = state.todaySlipups.filter(item => item.id !== id);
+            }
+            saveStateToStorage();
+            renderChecklist();
+            showToast("Item removed from daily record.");
+        }
+
+        async function triggerResetDailyTracker() {
+            const proceed = await showConfirmDialog(
+                "Reset today's dynamic checklist?",
+                "This will clear all verified extra logs, slip-up warning panels, and restore checks back to baseline."
+            );
+            if (proceed) {
+                state.checklist = {
+                    oats: false,
+                    nuts: false,
+                    veggies: false,
+                    no_junk: false,
+                    cardio: false,
+                    water: false
+                };
+                state.customGoodItems = [];
+                state.todaySlipups = [];
+                saveStateToStorage();
+                renderChecklist();
+                showToast("Daily checklist reset successfully!");
+            }
+        }
+
+        // --- LOG DIARY / STORAGE LOGS ---
+        function saveVitals(event) {
+            event.preventDefault();
+            const weight = document.getElementById('vital-weight').value;
+            const cardio = document.getElementById('vital-cardio').value;
+            const water = document.getElementById('vital-water').value;
+            const energy = document.getElementById('vital-energy').value;
+
+            if (!cardio && !water) {
+                showToast("Please enter at least water or cardio!");
+                return;
+            }
+
+            const newLog = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                weight: weight || "N/A",
+                cardio: cardio || "0",
+                water: water || "0",
+                energy: energy
+            };
+
+            state.vitals.unshift(newLog);
+            saveStateToStorage();
+            renderVitalsHistory();
+
+            document.getElementById('vitals-form').reset();
+            showToast("Vitals Logged Successfully!");
+        }
+
+        function renderVitalsHistory() {
+            const historyContainer = document.getElementById('vitals-history-list');
+            if (state.vitals.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-xs">
+                        <i class="fa-solid fa-list-check text-xl mb-1.5 block"></i>
+                        No recorded entries yet.
+                    </div>
+                `;
+                return;
+            }
+
+            historyContainer.innerHTML = state.vitals.map(log => `
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3 text-xs flex justify-between items-center">
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] text-slate-400 font-bold block">${log.date}</span>
+                        <p class="text-slate-700 font-medium">
+                            Cardio: <strong class="text-blue-600">${log.cardio}m</strong> | 
+                            Water: <strong class="text-sky-500">${log.water} Gl</strong> | 
+                            Weight: <strong>${log.weight}</strong>
+                        </p>
+                    </div>
+                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold text-[9px] rounded-full uppercase">${log.energy}</span>
+                </div>
+            `).join('');
+        }
+
+        async function triggerClearAllLogs() {
+            const proceed = await showConfirmDialog(
+                "Permanently clear your vitals logs?",
+                "This action is permanent and will completely reset your daily progress logs."
+            );
+            if (proceed) {
+                state.vitals = [];
+                state.checklist = {
+                    oats: false,
+                    nuts: false,
+                    veggies: false,
+                    no_junk: false,
+                    cardio: false,
+                    water: false
+                };
+                state.customGoodItems = [];
+                state.todaySlipups = [];
+                saveStateToStorage();
+                renderChecklist();
+                renderVitalsHistory();
+                showToast("All logged history cleared!");
+            }
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(message) {
+            const toast = document.getElementById('toast-message');
+            const text = document.getElementById('toast-text');
+            text.innerText = message;
+            toast.className = toast.className.replace('opacity-0 pointer-events-none', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.className = toast.className.replace('opacity-100', 'opacity-0 pointer-events-none');
+            }, 2500);
+        }
+
+        // --- GEMINI IMAGE GENERATOR PORT (IMAGEN-4.0) ---
+        async function triggerImageGeneration(foodId, foodName, isAvoid = false) {
+            const btn = document.getElementById(`btn-gen-${foodId}`);
+            const holder = document.getElementById(`img-holder-${foodId}`);
+            const img = document.getElementById(`img-${foodId}`);
+
+            let foodObj = isAvoid ? state.foodsToAvoid.find(f => f.id === foodId) : state.foodsToEat.find(f => f.id === foodId);
+            let prompt = foodObj ? foodObj.defaultPrompt : `A high quality, clear studio photograph of ${foodName}, appetizing culinary shot, bright background.`;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Drawing...`;
+            showToast(`Generating image for ${foodName}...`);
+
+            let delay = 1000;
+            let success = false;
+            let resultBase64 = '';
+
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const payload = { 
+                        instances: { prompt: prompt }, 
+                        parameters: { "sampleCount": 1 } 
+                    };
+                    const apiUrl = `${API_BASE}/v1beta/models/imagen-4.0-generate-001:predict`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        resultBase64 = result.predictions[0].bytesBase64Encoded;
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Attempt ${attempt + 1} failed. Retrying...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+
+            if (success) {
+                const finalSrc = `data:image/png;base64,${resultBase64}`;
+                img.src = finalSrc;
+                holder.classList.remove('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> Regenerate Picture`;
+                showToast(`Visual created for ${foodName}!`);
+            } else {
+                img.src = `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80`;
+                holder.classList.remove('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Show Fallback`;
+                showToast("Network is busy. Loaded fallback photo!");
+            }
+            btn.disabled = false;
+        }
+
+        function zoomFoodImage(foodId, foodName) {
+            const img = document.getElementById(`img-${foodId}`);
+            if (img && img.src) {
+                openImageViewer(img.src, foodName);
+            }
+        }
+
+        // --- GEMINI AI CHEF PORT (TEXT GENERATION) ---
+        function renderChefIngredients() {
+            const container = document.getElementById('chef-ingredients-selector');
+            container.innerHTML = state.foodsToEat.map(food => `
+                <label class="flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-100 rounded-2xl cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-100 transition-all">
+                    <input type="checkbox" value="${food.name}" class="rounded text-indigo-500 focus:ring-indigo-400 w-4.5 h-4.5 cursor-pointer accent-indigo-500 ingredient-checkbox">
+                    <div class="w-7 h-7 rounded-lg bg-white border border-slate-150 flex items-center justify-center text-xs shrink-0">
+                        <i class="fa-solid ${food.icon}"></i>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-700 leading-none">${food.name}</span>
+                </label>
+            `).join('');
+        }
+
+        async function generateRecipe() {
+            const checkedBoxes = document.querySelectorAll('.ingredient-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                showToast("Please choose at least 1 ingredient!");
+                return;
+            }
+
+            const chosen = Array.from(checkedBoxes).map(cb => cb.value);
+            const extraPreference = document.getElementById('recipe-preference').value;
+            const btn = document.getElementById('btn-generate-recipe');
+            const outputCard = document.getElementById('recipe-output-card');
+            const textOutput = document.getElementById('recipe-text-content');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Writing Culinary Plan...`;
+            outputCard.classList.remove('hidden');
+            textOutput.innerHTML = `<p class="italic text-slate-400 text-center py-4"><i class="fa-solid fa-gears animate-spin mr-2"></i> Designing healthy menu block...</p>`;
+            
+            // Reset dynamic image elements
+            document.getElementById('recipe-image-loading').classList.add('hidden');
+            document.getElementById('recipe-image-wrapper').classList.add('hidden');
+
+            const userPrompt = `
+                Create a quick, delicious, cholesterol-lowering, stroke-prevention culinary recipe utilizing these specific foods: ${chosen.join(', ')}. 
+                Additional preferences provided: ${extraPreference || "none"}.
+                Make sure the explanation detail why this recipe directly assists in lowering bad LDL values (<${state.newTest.ldl} mg/dl) and protective cardiovascular health. 
+                Keep it highly structured, easy to read on a cellular screen, including:
+                - Recipe Title
+                - Prep Time & Servings
+                - Complete Ingredients list
+                - Clear Step-by-step cooking directions
+                - Brief explanation of cardiovascular benefits
+            `;
+
+            const systemPrompt = "You are a clinical cardiovascular cardiologist and professional heart-healthy culinary nutritionist. Write concise, actionable recipes.";
+            
+            let delay = 1000;
+            let success = false;
+            let textGenerated = "";
+
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        textGenerated = candidate.content.parts[0].text;
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Attempt ${attempt + 1} failed. Retrying...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+
+            if (success) {
+                const formattedHtml = textGenerated
+                    .replace(/\*\*(.*?)\*\"/g, '<strong>$1</strong>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .split('\n')
+                    .map(line => {
+                        if (line.startsWith('# ')) return `<h2 class="text-base font-bold text-slate-800 mt-3 border-b border-slate-100 pb-1">${line.replace('# ', '')}</h2>`;
+                        if (line.startsWith('## ')) return `<h3 class="text-sm font-bold text-slate-800 mt-2">${line.replace('## ', '')}</h3>`;
+                        if (line.startsWith('### ')) return `<h4 class="text-xs font-bold text-slate-800 mt-2">${line.replace('### ', '')}</h4>`;
+                        if (line.startsWith('- ') || line.startsWith('* ')) return `<li class="ml-4 list-disc text-slate-600 my-1">${line.substring(2)}</li>`;
+                        if (line.trim() === "") return "";
+                        return `<p class="my-1.5 leading-relaxed text-slate-600">${line}</p>`;
+                    }).join('');
+
+                textOutput.innerHTML = formattedHtml;
+                showToast("Recipe Created Successfully!");
+
+                // Parse the title to generate the professional photo
+                const titleMatch = textGenerated.match(/#\s*(.*?)\n/) || textGenerated.match(/\*\*(.*?)\*\*/);
+                const recipeTitle = titleMatch ? titleMatch[1].replace(/[*#]/g, '').trim() : (chosen.join(', ') + ' Medley');
+                
+                // Fire off the visualizer thread
+                generateRecipeImage(recipeTitle);
+            } else {
+                textOutput.innerHTML = `
+                    <div class="text-center p-4 text-slate-500">
+                        <i class="fa-solid fa-triangle-exclamation text-xl text-amber-500 mb-2"></i>
+                        <p class="font-semibold text-xs">AI Kitchen is currently busy.</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Please check your connection and click the button to try again.</p>
+                    </div>
+                `;
+                showToast("Failed to draft recipe. Please try again!");
+            }
+            btn.disabled = false;
+        }
+
+        async function generateRecipeImage(recipeTitle) {
+            const imageLoading = document.getElementById('recipe-image-loading');
+            const imageWrapper = document.getElementById('recipe-image-wrapper');
+            const dishImage = document.getElementById('recipe-dish-image');
+            
+            imageLoading.classList.remove('hidden');
+            imageWrapper.classList.add('hidden');
+            
+            const prompt = `Gourmet, professional, award-winning food photography of a finished cooked dish: ${recipeTitle}. Styled beautifully on a modern minimalist porcelain plate, natural warm lighting, appetizing presentation, macro food details, depth of field, 8k, recipe-book aesthetic.`;
+            
+            let success = false;
+            let resultBase64 = "";
+            let delay = 1000;
+            
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const payload = { 
+                        instances: { prompt: prompt }, 
+                        parameters: { "sampleCount": 1 } 
+                    };
+                    const apiUrl = `${API_BASE}/v1beta/models/imagen-4.0-generate-001:predict`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        resultBase64 = result.predictions[0].bytesBase64Encoded;
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Recipe Image Attempt ${attempt + 1} failed. Retrying...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+            
+            imageLoading.classList.add('hidden');
+            if (success) {
+                dishImage.src = `data:image/png;base64,${resultBase64}`;
+                imageWrapper.classList.remove('hidden');
+            } else {
+                // Fallback image in case of rate limits
+                dishImage.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80";
+                imageWrapper.classList.remove('hidden');
+            }
+        }
+
+        function zoomRecipeImage() {
+            const img = document.getElementById('recipe-dish-image');
+            if (img && img.src) {
+                openImageViewer(img.src, "AI Crafted Cooked Dish Presentation");
+            }
+        }
+
+        // --- DYNAMIC AI DIET VISION CLASSIFIER ---
+        async function analyzeAndCategorizeFood() {
+            const inputField = document.getElementById('food-analyzer-input');
+            const foodNameText = inputField.value.trim();
+            const imageBase64Data = state.classifierSelectedImage; // Holds base64 if selected
+            const btn = document.getElementById('btn-analyze-food');
+            const resultCard = document.getElementById('analyzer-result-card');
+
+            if (!foodNameText && !imageBase64Data) {
+                showToast("Please enter a food name or snap a picture to analyze!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Classifying...`;
+            resultCard.classList.remove('hidden');
+            resultCard.className = "p-3.5 rounded-2xl text-xs space-y-2 bg-slate-100 border border-slate-200 text-slate-600 animate-pulse";
+            resultCard.innerHTML = `<p class="italic"><i class="fa-solid fa-microchip animate-spin text-indigo-500 mr-1.5"></i> Running live cardiovascular classification panel...</p>`;
+
+            // 1. Prepare Multimodal prompts
+            let promptText = "";
+            if (imageBase64Data) {
+                promptText = `Assess the food item shown in this image. `;
+                if (foodNameText) {
+                    promptText += `The user labeled it as "${foodNameText}". `;
+                }
+                promptText += `Identify the dishes/ingredients, determine if it belongs in 'Foods to Eat' (helps bring LDL down below ${state.newTest.ldl} mg/dl and restore HDL from ${state.newTest.hdl} mg/dl) or 'Foods to Avoid Completely' (contains saturated fat, high sodium, trans-fats, or empty triggers). Provide response strictly in JSON matching the specified schema. For healthy foods that contain lipids or fats (like avocados, specific oils, nuts, or seeds), ensure you formulate a highly precise "moderation" instruction detailing exact piece counts, spoonful limits, or gram caps to restrict overconsumption.`;
+            } else {
+                promptText = `Assess the following food: "${foodNameText}". Determine whether it is a "Food to Eat" (cholesterol lowering, contains high soluble fiber, healthy sterols, or unsaturated healthy fats) or a "Food to Avoid Completely" (high saturated fats, trans fats, or heavy refined sugars that spike LDL cholesterol and increase stroke risk). Provide your response strictly in JSON matching the specified schema. Make sure to detail how this relates to cholesterol (e.g. keeping LDL below ${state.newTest.ldl} mg/dl and recovering HDL from ${state.newTest.hdl} mg/dl). For healthy items with lipids or oils, formulate a precise "moderation" property highlighting exact unit counts, slice portions, or spoon limits (e.g. "Exactly 10 nuts", "Exactly 1/2 of a medium avocado").`;
+            }
+
+            const systemPrompt = "You are an elite clinical cardiovascular cardiologist and lipidologist. Classify the food option as 'eat' or 'avoid'. Provide realistic, science-backed justification suitable for a patient recovering from a dangerous cholesterol increase. Emphasize precise counting, spoonful measurements, and weight thresholds for lipid-dense healthy ingredients.";
+
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    category: { type: "STRING", description: "Must be exactly 'eat' or 'avoid' (all lowercase)" },
+                    name: { type: "STRING", description: "Clean standardized name of the identified food" },
+                    mechanismOrRisk: { type: "STRING", description: "A brief 2-5 word tag representing the primary biochemical mechanism (for 'eat') or major risk factor (for 'avoid')" },
+                    why: { type: "STRING", description: "A clear, clinical 2-sentence explanation of why this food belongs in this category and its impact on blood LDL/HDL levels." },
+                    doseOrSubstitute: { type: "STRING", description: "If category is 'eat', suggest an optimal daily target dose. If category is 'avoid', suggest a healthy heart-safe alternative substitute." },
+                    moderation: { type: "STRING", description: "Strict piece count limit, spoon cap, or slice portion (e.g., 'Strict Portion: Exactly 10 medium raw nuts max daily', 'Limit: Max 1/2 medium piece daily'). Explicitly required for healthy lipid/fat foods." },
+                    icon: { type: "STRING", description: "A single FontAwesome solid class name suitable for the food (e.g. 'fa-lemon', 'fa-egg', 'fa-cheese', 'fa-carrot')" },
+                    defaultPrompt: { type: "STRING", description: "A highly descriptive, realistic, and positive/healthy (if 'eat') or high-contrast/greasy/warning (if 'avoid') photographic prompt for an AI image generator." }
+                },
+                required: ["category", "name", "mechanismOrRisk", "why", "doseOrSubstitute", "moderation", "icon", "defaultPrompt"]
+            };
+
+            // 2. Prepare parts array with inline base64 if present
+            const partsArray = [{ text: promptText }];
+            if (imageBase64Data) {
+                const cleanBase64 = imageBase64Data.split(',')[1];
+                partsArray.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: cleanBase64
+                    }
+                });
+            }
+
+            let success = false;
+            let parsedData = null;
+            let delay = 1000;
+
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+
+                    const payload = {
+                        contents: [{ role: "user", parts: partsArray }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: responseSchema
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        parsedData = JSON.parse(result.candidates[0].content.parts[0].text);
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Analysis Attempt ${attempt + 1} failed. Retrying...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+
+            resultCard.classList.remove('animate-pulse');
+
+            if (success && parsedData) {
+                const uniqueId = "food_" + Date.now();
+                const isEat = parsedData.category.toLowerCase() === 'eat';
+
+                const newFoodObject = {
+                    id: uniqueId,
+                    name: parsedData.name,
+                    why: parsedData.why,
+                    moderation: parsedData.moderation,
+                    icon: parsedData.icon || (isEat ? "fa-seedling text-emerald-500" : "fa-ban text-rose-500"),
+                    defaultPrompt: parsedData.defaultPrompt
+                };
+
+                if (isEat) {
+                    newFoodObject.mechanism = parsedData.mechanismOrRisk;
+                    newFoodObject.dose = parsedData.doseOrSubstitute;
+                    state.foodsToEat.unshift(newFoodObject);
+                    switchDietSubTab('eat');
+                } else {
+                    newFoodObject.risk = parsedData.mechanismOrRisk;
+                    newFoodObject.substitute = parsedData.doseOrSubstitute;
+                    state.foodsToAvoid.unshift(newFoodObject);
+                    switchDietSubTab('avoid');
+                }
+
+                saveStateToStorage();
+                renderFoods();
+                renderChecklist();
+                renderChefIngredients();
+
+                resultCard.className = isEat 
+                    ? "p-4 rounded-2xl text-xs space-y-2 bg-emerald-50 border border-emerald-100 text-emerald-900" 
+                    : "p-4 rounded-2xl text-xs space-y-2 bg-rose-50 border border-rose-100 text-rose-900";
+
+                resultCard.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <i class="fa-solid ${isEat ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-rose-600'}"></i>
+                        <span>Identified: ${parsedData.name} (${isEat ? 'Eat' : 'Avoid'})</span>
+                    </div>
+                    <p class="text-slate-700 leading-relaxed">${parsedData.why}</p>
+                    <div class="space-y-1.5 pt-2 border-t ${isEat ? 'border-emerald-100' : 'border-rose-100'} text-[11px] font-semibold">
+                        <div class="flex justify-between">
+                            <span>${isEat ? 'Dose: ' + parsedData.doseOrSubstitute : 'Substitute: ' + parsedData.doseOrSubstitute}</span>
+                            <span class="uppercase tracking-wider px-2 py-0.5 rounded ${isEat ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${isEat ? 'Eat' : 'Avoid'}</span>
+                        </div>
+                        ${parsedData.moderation ? `
+                        <div class="text-amber-800 flex items-center gap-1.5 bg-amber-50/60 p-2 rounded-xl border border-amber-100">
+                            <i class="fa-solid fa-scale-balanced text-xs"></i>
+                            <span>Moderation Guideline: <strong>${parsedData.moderation}</strong></span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                inputField.value = "";
+                clearClassifierPreviewImage();
+                showToast(`${parsedData.name} added to your Diet Plan!`);
+            } else {
+                resultCard.className = "p-3.5 rounded-2xl text-xs space-y-2 bg-amber-50 border border-amber-200 text-amber-900";
+                resultCard.innerHTML = `
+                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Analysis Temporary Busy</p>
+                    <p class="text-[11px] text-amber-800/80">We were unable to classify this food right now. Please try again or check your cell's connectivity.</p>
+                `;
+                showToast("Classification failed. Please retry.");
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> Analyze`;
+        }
+
+        function copyRecipeToClipboard() {
+            const recipeText = document.getElementById('recipe-text-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = recipeText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            showToast("Recipe copied to clipboard!");
+        }
+    </script>
+</body>
+</html>

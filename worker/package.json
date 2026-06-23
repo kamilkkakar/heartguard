@@ -1,0 +1,13 @@
+{
+  "name": "heartguard-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that proxies HeartGuard's AI calls and hides the Gemini API key.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3"
+  }
+}
