@@ -469,7 +469,7 @@
                             <span><i class="fa-solid fa-key"></i> Google Gemini AI API:</span>
                             <span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle text-[8px]"></i> Secured (Server-Side Key)</span>
                         </div>
-                        Your requests are proxied securely through the <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-600">gemini-3-flash-preview</code> model.
+                        Your requests are proxied securely through the <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-600">gemini-2.5-flash</code> model.
                     </div>
 
                     <button onclick="generateRecipe()" id="btn-generate-recipe" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2">
@@ -1249,7 +1249,7 @@
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
                     statusText.innerText = `Analyzing image contents (Attempt ${attempt + 1}/3)...`;
-                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`;
 
                     const payload = {
                         contents: [{ role: "user", parts: partsArray }],
@@ -1657,7 +1657,7 @@
 
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`;
 
                     const payload = {
                         contents: [{ role: "user", parts: partsArray }],
@@ -1882,11 +1882,11 @@
 
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const payload = { 
-                        instances: { prompt: prompt }, 
-                        parameters: { "sampleCount": 1 } 
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseModalities: ["IMAGE"] }
                     };
-                    const apiUrl = `${API_BASE}/v1beta/models/imagen-4.0-generate-001:predict`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash-image:generateContent`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -1895,8 +1895,10 @@
                     });
 
                     const result = await response.json();
-                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-                        resultBase64 = result.predictions[0].bytesBase64Encoded;
+                    const parts = result.candidates?.[0]?.content?.parts || [];
+                    const imgPart = parts.find(part => part.inlineData?.data);
+                    if (imgPart) {
+                        resultBase64 = imgPart.inlineData.data;
                         success = true;
                         break;
                     }
@@ -1985,7 +1987,7 @@
 
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`;
 
                     const payload = {
                         contents: [{ parts: [{ text: userPrompt }] }],
@@ -2065,11 +2067,11 @@
             
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const payload = { 
-                        instances: { prompt: prompt }, 
-                        parameters: { "sampleCount": 1 } 
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseModalities: ["IMAGE"] }
                     };
-                    const apiUrl = `${API_BASE}/v1beta/models/imagen-4.0-generate-001:predict`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash-image:generateContent`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -2078,8 +2080,10 @@
                     });
 
                     const result = await response.json();
-                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-                        resultBase64 = result.predictions[0].bytesBase64Encoded;
+                    const parts = result.candidates?.[0]?.content?.parts || [];
+                    const imgPart = parts.find(part => part.inlineData?.data);
+                    if (imgPart) {
+                        resultBase64 = imgPart.inlineData.data;
                         success = true;
                         break;
                     }
@@ -2174,7 +2178,7 @@
 
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const apiUrl = `${API_BASE}/v1beta/models/gemini-3-flash-preview:generateContent`;
+                    const apiUrl = `${API_BASE}/v1beta/models/gemini-2.5-flash:generateContent`;
 
                     const payload = {
                         contents: [{ role: "user", parts: partsArray }],

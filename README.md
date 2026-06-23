@@ -50,10 +50,10 @@ Commit and push — GitHub Pages redeploys automatically.
 
 ## Notes
 
-- **Models:** the app uses `gemini-3-flash-preview` and
-  `imagen-4.0-generate-001`. Verify these against the current
-  [model list](https://ai.google.dev/gemini-api/docs/models); if a name changed,
-  update it in both `index.html` and `ALLOWED_MODELS` in `worker/worker.js`.
+- **Models:** the app uses `gemini-2.5-flash` (text + vision) and
+  `gemini-2.5-flash-image` (image generation). If you change them, update both
+  `index.html` and `ALLOWED_MODELS` in `worker/worker.js`, and check the current
+  [model list](https://ai.google.dev/gemini-api/docs/models).
 - **Local testing:** `cd worker && npx wrangler dev`, then set
   `API_BASE = "http://localhost:8787"`.
 - **Tighter CORS:** set `ALLOWED_ORIGIN` in `worker/worker.js` to your Pages

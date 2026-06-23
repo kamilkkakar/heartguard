@@ -13,8 +13,8 @@
 
 // Only these models may be proxied (prevents your key being used for anything else).
 const ALLOWED_MODELS = [
-  "gemini-3-flash-preview",
-  "imagen-4.0-generate-001",
+  "gemini-2.5-flash",        // text + vision
+  "gemini-2.5-flash-image",  // image generation
 ];
 
 // CORS. For tighter security, replace "*" with your GitHub Pages origin,
