@@ -8,7 +8,7 @@ The AI features run through a small **Cloudflare Worker** so the Gemini API key
 stays server-side and is never exposed in the browser.
 
 > **Not medical advice.** This is an educational prototype, not a medical device.
-> AI output can be inaccurate — always consult a qualified clinician.
+> AI output can be inaccurate. Always consult a qualified clinician.
 
 **Live demo:** https://kamilkkakar.github.io/heartguard/
 *(AI features need the proxy below to be deployed and `API_BASE` set.)*
@@ -19,8 +19,6 @@ stays server-side and is never exposed in the browser.
 Browser (index.html)  ──►  Cloudflare Worker  ──►  Google Gemini API
   no key                   holds GEMINI_API_KEY
 ```
-
-The static site contains no secrets, so it's safe to host publicly.
 
 ## Setup
 
